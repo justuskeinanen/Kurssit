@@ -1,54 +1,59 @@
+// package Kurssit;
+
 import java.sql.*;
 import java.util.*;
 
 public class Kurssit {
-    private static Connection db;
+    private Connection connection;
+    private Scanner scn;
 
-    public Kurssit(Connection db) {
-        this.db = db;
+    public Kurssit(Scanner scn) {
+        connection = connect();
+        this.scn = scn;
+    }
+
+    private Connection connect() {
+        String url = "jdbc:sqlite:kurssit.db";
+        Connection conn = null;
+        try {
+
+            conn = DriverManager.getConnection(url);
+        } catch (SQLException e) {
+            System.out.println(e.getStackTrace());
+        }
+        return conn;
     }
 
     public static void main(String[] args) throws SQLException {
-        Connection db = DriverManager.getConnection("jdbc:sqlite:kurssit.db");
-        Kurssit k = new Kurssit(db);
-        Scanner s = new Scanner("2\nAnna Leppänen");
-        //Scanner s = new Scanner(System.in);
-        ui(s, db);
-
-        /*
-         * PreparedStatement p =
-         * db.prepareStatement("SELECT hinta FROM Tuotteet WHERE nimi=?");
-         * p.setString(1, nimi);
-         * 
-         * ResultSet r = p.executeQuery(); if (r.next()) { System.out.println("Hinta: "
-         * + r.getInt("hinta")); } else { System.out.println("Tuotetta ei löytynyt"); }
-         */
-        s.close();
+        Scanner scn = new Scanner(System.in);
+        Kurssit app = new Kurssit(scn);
+        app.runUI();
+        scn.close();
     }
 
-    private static void ui(Scanner s, Connection db) throws SQLException {
+    private void runUI() throws SQLException {
         OUTER: while (true) {
             System.out.print("Valitse toiminto: ");
-            int cmd = Integer.valueOf(s.nextLine());
+            int cmd = Integer.valueOf(scn.nextLine());
             switch (cmd) {
                 case 1:
                     System.out.print("Anna vuosi: ");
-                    int vuosi = s.nextInt();
+                    int vuosi = scn.nextInt();
                     vuosiraportti(vuosi);
                     break;
                 case 2:
                     System.out.print("Anna opiskelijan nimi: ");
-                    String nimi = s.nextLine();
+                    String nimi = scn.nextLine();
                     opiskelijaraportti(nimi);
                     break;
                 case 3:
                     System.out.print("Anna kurssin nimi: ");
-                    String kurssiNimi = s.nextLine();
+                    String kurssiNimi = scn.nextLine();
                     kurssiraportti(kurssiNimi);
                     break;
                 case 4:
                     System.out.print("Anna opettajien määrä: ");
-                    int opettajia = s.nextInt();
+                    int opettajia = scn.nextInt();
                     opettajaRaportti(opettajia);
                     break;
                 case 5:
@@ -67,38 +72,34 @@ public class Kurssit {
         }
     }
 
-    private static void opettajaRaportti(int opettajia) throws SQLException {
-        PreparedStatement p = db.prepareStatement("SELECT * FR");
+    private void opettajaRaportti(int opettajia) throws SQLException {
+        PreparedStatement p = connection.prepareStatement("SELECT * FR");
     }
 
-    private static void kurssiraportti(String kurssiNimi) throws SQLException {
-        PreparedStatement p = db.prepareStatement("SELECT ");
+    private void kurssiraportti(String kurssiNimi) throws SQLException {
+        PreparedStatement p = connection.prepareStatement("SELECT ");
     }
 
-    private static void opiskelijaraportti(String nimi) throws SQLException {
-        PreparedStatement p0 = db.prepareStatement("select kurssit.nimi, kurssit.laajuus,"
-                + "suoritukset.paivays, suoritukset.arvosana from suoritukset, opiskelijat,"
-                + " kurssit where suoritukset.opiskelija_id = opiskelijat.id AND kurssit.id = "
-                + "suoritukset.kurssi_id AND opiskelijat.nimi = ? order by paivays;");
-        p0.setString(1, nimi);
-        ResultSet r = p0.executeQuery();
+    private void opiskelijaraportti(String nimi) throws SQLException {
 
-        // if (r.next()) {
-        //     System.out.println("kurssi" + "\top" + "\tpäiväys" + "\tarvosana");
-            while (r.next()) {
-                System.out.print(
-                    r.getString("Kurssit.nimi") +
-                    "\t" + r.getString("kurssit.laajuus")
-                    + "\t" + r.getDate("suoritukset.paivays")
-                    + "\t" + r.getInt("suoritukset.arvosana"));
+        PreparedStatement ps = connection.prepareStatement(
+                "SELECT kurssit.nimi, kurssit.laajuus, suoritukset.paivays, suoritukset.arvosana FROM suoritukset, opiskelijat, kurssit WHERE suoritukset.opiskelija_id = opiskelijat.id AND kurssit.id = suoritukset.kurssi_id AND opiskelijat.nimi = ? ORDER BY paivays;");
+        ps.setString(1, nimi);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            System.out.println("kurssi" + "\top" + "\tpäiväys" + "\tarvosana");
+            while (rs.next()) {
+                System.out.println(rs.getString("nimi") + "\t" + rs.getString("laajuus") + "\t" + rs.getString("paivays")
+                        + "\t" + rs.getInt("arvosana"));
             }
-        // } else {
-        //     System.out.println("Opiskelijaa ei löytynyt");
-        // }
+        } else {
+            System.out.println("Opiskelijaa ei löytynyt");
+        }
 
     }
 
-    private static void vuosiraportti(int vuosi) throws SQLException {
-        PreparedStatement p = db.prepareStatement("SELECT * FROM ");
+    private void vuosiraportti(int vuosi) throws SQLException {
+        PreparedStatement p = connection.prepareStatement("SELECT * FROM ");
     }
 }
