@@ -33,6 +33,7 @@ public class Kurssit {
 
     private void runUI() throws SQLException {
         OUTER: while (true) {
+            System.out.println("");
             System.out.print("Valitse toiminto: ");
             int cmd = Integer.valueOf(scn.nextLine());
             switch (cmd) {
@@ -58,6 +59,7 @@ public class Kurssit {
                     break;
                 case 5:
                     System.out.println("Lopetetaan ohjelma.");
+                    System.out.println("");
                     break OUTER;
                 default:
                     System.out.println("Komennot:");
@@ -79,11 +81,18 @@ public class Kurssit {
     private void kurssiraportti(String kurssiNimi) throws SQLException {
         PreparedStatement p = connection.prepareStatement("SELECT ");
     }
-
+    private void vuosiraportti(int vuosi) throws SQLException {
+        String SQLStatement = "select sum(laajuus) from suoritukset, kurssit where kurssit.id = suoritukset.kurssi_id and date(paivays) between \"?-01-01\" and \"?-12-31\";";
+        PreparedStatement ps = connection.prepareStatement(SQLStatement);
+        ps.setInt(1, vuosi);
+        ps.setInt(1, vuosi);
+        ResultSet rs = ps.executeQuery();
+        //toi sql-statement ei tule menemään noin läpi, mutta koita saada joku testaus-mahdollisuus siitä ja sitten ala muotoilemaan ja googlailemaan:
+    }
+    
     private void opiskelijaraportti(String nimi) throws SQLException {
-
-        PreparedStatement ps = connection.prepareStatement(
-                "SELECT kurssit.nimi, kurssit.laajuus, suoritukset.paivays, suoritukset.arvosana FROM suoritukset, opiskelijat, kurssit WHERE suoritukset.opiskelija_id = opiskelijat.id AND kurssit.id = suoritukset.kurssi_id AND opiskelijat.nimi = ? ORDER BY paivays;");
+        String SQLStatement = "SELECT kurssit.nimi, kurssit.laajuus, suoritukset.paivays, suoritukset.arvosana FROM suoritukset, opiskelijat, kurssit WHERE suoritukset.opiskelija_id = opiskelijat.id AND kurssit.id = suoritukset.kurssi_id AND opiskelijat.nimi = ? ORDER BY paivays;";
+        PreparedStatement ps = connection.prepareStatement(SQLStatement);
         ps.setString(1, nimi);
         ResultSet rs = ps.executeQuery();
 
@@ -99,7 +108,4 @@ public class Kurssit {
 
     }
 
-    private void vuosiraportti(int vuosi) throws SQLException {
-        PreparedStatement p = connection.prepareStatement("SELECT * FROM ");
-    }
 }
