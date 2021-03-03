@@ -16,7 +16,6 @@ public class Kurssit {
         String url = "jdbc:sqlite:kurssit.db";
         Connection conn = null;
         try {
-
             conn = DriverManager.getConnection(url);
         } catch (SQLException e) {
             System.out.println(e.getStackTrace());
@@ -35,12 +34,27 @@ public class Kurssit {
         OUTER: while (true) {
             System.out.println("");
             System.out.print("Valitse toiminto: ");
-            int cmd = Integer.valueOf(scn.nextLine());
+            int cmd = 0;
+            try {
+                cmd = Integer.valueOf(scn.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("epäkelpo syöte.");
+                System.out.print(e.getMessage());
+
+            }
+
             switch (cmd) {
                 case 1:
                     System.out.print("Anna vuosi: ");
-                    int vuosi = scn.nextInt();
-                    vuosiraportti(vuosi);
+                    int vuosi = 0;
+                    try {
+                        vuosi = Integer.valueOf(scn.nextLine());
+                        vuosiraportti(vuosi);
+                    } catch (NumberFormatException e) {
+                        System.out.println("epäkelpo syöte.");
+                        System.out.print(e.getMessage());
+
+                    }
                     break;
                 case 2:
                     System.out.print("Anna opiskelijan nimi: ");
@@ -68,6 +82,7 @@ public class Kurssit {
                     System.out.println("3 - Tulosta annetun kurssin suoritusten arvosanojen jakauma.");
                     System.out.println("4 - Tulosta top x eniten opintopisteitä antaneet opettajat.");
                     System.out.println("5 - Sulje ohjelma.");
+                    break;
 
             }
 
@@ -81,15 +96,21 @@ public class Kurssit {
     private void kurssiraportti(String kurssiNimi) throws SQLException {
         PreparedStatement p = connection.prepareStatement("SELECT ");
     }
+
     private void vuosiraportti(int vuosi) throws SQLException {
-        String SQLStatement = "select sum(laajuus) from suoritukset, kurssit where kurssit.id = suoritukset.kurssi_id and date(paivays) between \"?-01-01\" and \"?-12-31\";";
+        String SQLStatement = 
+                "select sum(k.laajuus) from suoritukset s, kurssit k where k.id = s.kurssi_id and strftime('%Y', s.paivays) = '"
+                        + vuosi + "';";
         PreparedStatement ps = connection.prepareStatement(SQLStatement);
-        ps.setInt(1, vuosi);
-        ps.setInt(1, vuosi);
+        // ps.setString(1, "\"" + vuosi + "\"");
         ResultSet rs = ps.executeQuery();
-        //toi sql-statement ei tule menemään noin läpi, mutta koita saada joku testaus-mahdollisuus siitä ja sitten ala muotoilemaan ja googlailemaan:
+        if (rs.isBeforeFirst()) {
+            System.out.println("Opintopisteiden määrä: " + rs.getInt("sum(k.laajuus)"));
+        } else {
+            System.out.println("Jokin meni vikaan, yritä uudelleen. ");
+        }
     }
-    
+
     private void opiskelijaraportti(String nimi) throws SQLException {
         String SQLStatement = "SELECT kurssit.nimi, kurssit.laajuus, suoritukset.paivays, suoritukset.arvosana FROM suoritukset, opiskelijat, kurssit WHERE suoritukset.opiskelija_id = opiskelijat.id AND kurssit.id = suoritukset.kurssi_id AND opiskelijat.nimi = ? ORDER BY paivays;";
         PreparedStatement ps = connection.prepareStatement(SQLStatement);
@@ -99,8 +120,8 @@ public class Kurssit {
         if (rs.next()) {
             System.out.println("kurssi" + "\top" + "\tpäiväys" + "\tarvosana");
             while (rs.next()) {
-                System.out.println(rs.getString("nimi") + "\t" + rs.getString("laajuus") + "\t" + rs.getString("paivays")
-                        + "\t" + rs.getInt("arvosana"));
+                System.out.println(rs.getString("nimi") + "\t" + rs.getString("laajuus") + "\t"
+                        + rs.getString("paivays") + "\t" + rs.getInt("arvosana"));
             }
         } else {
             System.out.println("Opiskelijaa ei löytynyt");
