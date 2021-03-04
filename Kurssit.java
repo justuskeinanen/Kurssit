@@ -68,8 +68,14 @@ public class Kurssit {
                     break;
                 case 4:
                     System.out.print("Anna opettajien määrä: ");
-                    int opettajia = scn.nextInt();
-                    opettajaRaportti(opettajia);
+                    int opettajia = 0;
+                    try {
+                        opettajia = Integer.valueOf(scn.nextLine());
+                        opettajaRaportti(opettajia);
+                    } catch (NumberFormatException e) {
+                        System.out.println("epäkelpo syöte.");
+                        System.out.print(e.getMessage());
+                    }
                     break;
                 case 5:
                     System.out.println("Lopetetaan ohjelma.");
@@ -111,10 +117,10 @@ public class Kurssit {
 
         if (rs.next()) {
             System.out.println("kurssi" + "\top" + "\tpäiväys" + "\tarvosana");
-            while (rs.next()) {
+            do {
                 System.out.println(rs.getString("nimi") + "\t" + rs.getString("laajuus") + "\t"
                         + rs.getString("paivays") + "\t" + rs.getInt("arvosana"));
-            }
+            } while (rs.next());
         } else {
             System.out.println("Opiskelijaa ei löytynyt");
         }
@@ -136,6 +142,19 @@ public class Kurssit {
     }
 
     private void opettajaRaportti(int opettajia) throws SQLException {
-        PreparedStatement p = connection.prepareStatement("SELECT * FR");
+        String SQLStatement = "select o.nimi, sum(k.laajuus) from Suoritukset s, kurssit k, opettajat o where o.id = k.opettaja_id and s.kurssi_id = k.id group by o.nimi order by sum(k.laajuus) desc limit  ? ;";
+        PreparedStatement ps = connection.prepareStatement(SQLStatement);
+        ps.setInt(1, opettajia);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            System.out.println("opettaja\t\t" + "op");
+            do {
+                System.out.println(rs.getString("nimi") + "\t\t" + rs.getInt("sum(k.laajuus)"));
+            } while (rs.next());
+        } else {
+            System.out.println("Jokin meni vikaan, yritä uudelleen. ");
+        }
+
     }
 }
