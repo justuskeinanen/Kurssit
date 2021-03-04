@@ -89,20 +89,12 @@ public class Kurssit {
         }
     }
 
-    private void opettajaRaportti(int opettajia) throws SQLException {
-        PreparedStatement p = connection.prepareStatement("SELECT * FR");
-    }
-
-    private void kurssiraportti(String kurssiNimi) throws SQLException {
-        PreparedStatement p = connection.prepareStatement("SELECT ");
-    }
-
     private void vuosiraportti(int vuosi) throws SQLException {
-        String SQLStatement = 
-                "select sum(k.laajuus) from suoritukset s, kurssit k where k.id = s.kurssi_id and strftime('%Y', s.paivays) = '"
-                        + vuosi + "';";
+        String SQLStatement = "select sum(k.laajuus) from suoritukset s, kurssit k where k.id = s.kurssi_id and strftime('%Y', s.paivays) = '"
+                + vuosi + "';";
         PreparedStatement ps = connection.prepareStatement(SQLStatement);
-        // ps.setString(1, "\"" + vuosi + "\"");
+        // ps.setString(1, "\"" + vuosi + "\"");//Tää ei vain suostunut toimimaan,
+        // vaikka itki ja pieri ja vihelsi.
         ResultSet rs = ps.executeQuery();
         if (rs.isBeforeFirst()) {
             System.out.println("Opintopisteiden määrä: " + rs.getInt("sum(k.laajuus)"));
@@ -126,7 +118,24 @@ public class Kurssit {
         } else {
             System.out.println("Opiskelijaa ei löytynyt");
         }
-
     }
 
+    private void kurssiraportti(String kurssiNimi) throws SQLException {
+        String SQLStatement = "select s.arvosana, count() from Suoritukset s, kurssit k where s.kurssi_id = k.id and k.nimi = ? group by s.arvosana;";
+        PreparedStatement ps = connection.prepareStatement(SQLStatement);
+        ps.setString(1, kurssiNimi);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            do {
+                System.out.print("Arvosana: " + rs.getInt("arvosana") + ":\t" + rs.getInt("count()") + " kpl\n");
+            } while (rs.next());
+        } else {
+            System.out.println("Jokin meni vikaan, yritä uudelleen. ");
+        }
+    }
+
+    private void opettajaRaportti(int opettajia) throws SQLException {
+        PreparedStatement p = connection.prepareStatement("SELECT * FR");
+    }
 }
